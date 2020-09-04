@@ -1,0 +1,419 @@
+% This is a summary for 
+\documentclass[reqno,a4paper,11pt]{amsart}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage[margin=1.25in]{geometry}
+\usepackage{xcolor}
+\usepackage{setspace}
+\onehalfspace
+\usepackage{hyperref}
+\hypersetup{
+    pdftitle={COM 410 Summary},
+    pdfauthor={Moritz M. Konarski},
+    pdfsubject={Summary},
+    pdfkeywords={COM;}{410;}{computer;}{architecture}
+}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage{listings}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4,
+    language=[x86masm]Assembler
+}
+\lstset{style=mystyle}
+
+\begin{document}
+
+\title{COM 410 Summary}
+\author{Moritz M. Konarski}
+\date{\today}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+Summary for the course Computer Architecture and Organization (COM 410) at the
+American University of Central Asia (\url{https://www.auca.kg}) in Bishkek,
+Kyrgyzstan for the spring semester of 2020. COM 410 is focused on x86\_64 
+assembly language coded on Linux-based machines. This documents is exclusively
+for my own note taking and summarizing and not for distribution or the like.
+None of the information herein is my own nor do I claim to be the author of any
+of it.
+
+\subsection{Assembly Language}
+
+Assembly language (\textbf{asm}) is a low-level programming language that has
+a strong correspondence between the instructions in the code and the machine
+code it is compiled to. Because asm is closely tied to specific architectures
+and their instructions, each architecture has its own assembly language.
+
+The \textbf{assembler} is a program that converts asm into executable machine
+code. The process is called \textit{assembly}, as in the assembler
+\textit{assembles} the source code. Assembling turns text-based asm into
+numerical machine code that can be executed by a CPU. Some assemblers also
+perform optimizations of jump sizes or instruction ordering for optimal
+pipelining. Generally, one asm instruction corresponds to one  machine 
+instruction (notwithstanding comments, directives, macros, symbolic labels).
+
+\subsection{Language Syntax}
+
+In asm, each low-level machine instruction (opcode, specifies which operation
+is supposed to be performed) is represented by a \textbf{mnemonic}
+(abbreviations of what an instruction does, e.g. \texttt{MOV} for "move"). 
+Mnemonics are also used to represent \textbf{registers} and \textbf{flags}.
+
+Most opcodes require multiple \textbf{operands} to become complete
+instructions, e.g. two registers or variables to move data from one to the
+other. Assemblers generally permit labels for registers, variables, constants
+and memory locations to make programs shorter and easier to read and
+develop.
+
+One architecture can have multiple assemblers with multiple different syntax.
+For example in x86 assembly using the \textbf{Intel syntax} one writes
+\texttt{add eax, [ebx]} while the same code in \textbf{AT\&T syntax} is
+\texttt{addl (\%ebx), \%eax}. This course uses the AT\&T style of assembly. 
+Both AT\&T and Intel syntax generally compile into the same machine code.
+
+\subsection{Compilation}
+
+Programs are compiled using \texttt{gcc}. Compiling an assembly code file to an
+executable is done as follows:
+\begin{lstlisting}[language=bash]
+gcc file.s -o file.out
+\end{lstlisting}
+If one starts with a C file, a preprocessed file can be obtained as follows: 
+\begin{lstlisting}[language=bash]
+gcc file.c -o file.i  -E
+\end{lstlisting}
+Assembly code can be obtained as follows: 
+\begin{lstlisting}[language=bash]
+gcc file.c -o file.s  -S
+\end{lstlisting}
+An object file can be obtained as follows: 
+\begin{lstlisting}[language=bash]
+gcc file.c -o file.o  -c
+\end{lstlisting}
+
+\section{Commands}
+
+\subsection{call}
+Pushes the return address to the stack and branches to the specified procedure.
+The memory address that is branched to belongs to the first instruction of the
+called procedure. Leaving a procedure requires \texttt{ret}
+%------------------------------------------------------------------------------
+\subsubsection{User Specified Functions}
+\begin{lstlisting}
+call <function name>
+call print_message
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsubsection{plt}
+\texttt{plt} stands for \textbf{procedure linkage table} -- basically enables
+code to call functions regardless of where it sits in virtual memory. Thus the
+code does not have to store its own version of \texttt{printf}, code sharing is
+enabled.
+\begin{lstlisting}
+call <function>@plt
+call printf@plt
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsubsection{call printf@plt}
+Call the c-equivalent function printf.
+\begin{lstlisting}
+lea <format string>(%rip), %rdi
+lea <variable for format print>(%rip), %rsi
+# then rdx, r8, r9, xmm0-xmm7, ymm0 - ymm7, zmm0 - zmm7
+call printf@plt
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsubsection{call puts@plt}
+Call the c-equivalent function puts.
+\begin{lstlisting}
+lea <string>(%rip), %rdi
+call printf@plt
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsubsection{call scanf@plt}
+Call the c-equivalent function scanf.
+\begin{lstlisting}
+lea <format string>(%rip), %rdi
+lea <variable for format read>(%rip), %rsi
+# then rdx, r8, r9, xmm0-xmm7, ymm0 - ymm7, zmm0 - zmm7
+call scanf@plt
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{lea}
+Stands for \textbf{load effective address} basically loads the memory address
+of the variable into the register.
+\begin{lstlisting}
+lea <variable>(%rip), %<register>
+\end{lstlisting}
+One can also access local variables by specifying how far away a variable is
+from the current stack pointer. For example 8 bytes away or 0 bytes away.
+\begin{lstlisting}
+lea 0x8(%rsp), %<register>
+lea (%rsp), %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{syscall}
+System calls directly call kernel functions without relying on other pieces of
+code. Using the example of the \texttt{write} syscall, \texttt{rax} holds the 
+syscall ID, \texttt{rdi} specifies where to output, \texttt{rsi} holds the 
+memory address of the string, and \texttt{rdx} holds the length of the message 
+(size of the char array).
+\begin{lstlisting}
+mov $0x1, %rax
+mov $0x1, %rdi
+lea message(%rip), %rsi
+mov $message_size, %rdx
+syscall
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{xor}
+Computes a logical exclusive \texttt{OR} between two registers or a register
+and an immediate value. Can be used to set a register to 0.
+\begin{lstlisting}
+xor %<reg a>, %<reg b>
+xor %<reg a>, %<reg a>
+xor $<immediate>, %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{ret}
+Returns from a procedure by popping the return address off of the stack and
+branching to it.
+\begin{lstlisting}
+procedure:
+    # code
+    ret
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{mov}
+Move the data at the source to the destination. One can move an immediate value
+into a register or data from a register to another register, the data from
+a variable to a register, or local variables to a register by specifying offset
+from the stack pointer.
+\begin{lstlisting}
+mov $<immediate>, %<register>
+mov %<register>, %<register>
+mov $<variable>, %<register>
+mov 0x8(%rsp), %<register>
+mov (%rsp), %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{dec}
+Decrements the register by 1.
+\begin{lstlisting}
+dec %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{inc}
+Increments the register by 1.
+\begin{lstlisting}
+inc %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{add}
+Perform addition of the two operands, storing the result in the second operand.
+Two registers can be added together or an immediate value can be added to
+a register.
+\begin{lstlisting}
+add %<register>, %<register>
+add $<immediate>, %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{sub}
+Perform subtraction of the two operands, storing the result in the second 
+operand. Two registers can be subtracted or an immediate value can be 
+subtracted from a register.
+\begin{lstlisting}
+sub %<register>, %<register>
+sub $<immediate>, %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{push}
+Pushes the data onto the top of the stack.
+\begin{lstlisting}
+push %<register>
+push $<immediate>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{pop}
+Pops the first element off of the stack and puts it into the specified
+destination.
+\begin{lstlisting}
+pop %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{cltq}
+Converts a double word to a quad word, basically an \texttt{int} to
+\texttt{long}. This is done as \texttt{\%eax} to \texttt{\%rax} with sign
+extension.
+\begin{lstlisting}
+cltq
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{cmp}
+Compares two sources by subtracting the first from the second (reg a - reg b)
+and setting the condition codes accordingly.
+\begin{lstlisting}
+cmp %<reg a>, %<reg b>
+cmp %<register>, %<immediate>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{test}
+Sets the condition codes for the logical \texttt{AND} of both sources.
+\begin{lstlisting}
+test %<reg a>, %<reg b>
+cmp %<register>, %<immediate>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{jmp}
+Jumps to a label in code without recording any return information.
+\begin{lstlisting}
+jmp <label>
+\end{lstlisting}
+\begin{itemize}
+    \item JG: jmp if greater
+    \item JL: jmp if less
+    \item JGE: jmp if greater or equal (signed)
+    \item JAE: jmp if above or equal (unsigned)
+    \item JLE: jmp if less or equal
+    \item JZ: jmp if zero
+    \item JE: jmp if equal 
+    \item JNZ: jmp if not zero
+    \item JNE: jmp if not equal
+\end{itemize}
+%------------------------------------------------------------------------------
+\subsection{cqo}
+Convert quad word to octo word sign extends \texttt{rax} into \texttt{rdx:rax}.
+\begin{lstlisting}
+cqo
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{mul}
+Multiplies \texttt{rax} with the specified register. Result is stored in
+\texttt{rdx:rax}. For signed multiply use \texttt{imul}. This command can also
+multiply immediate values with registers.
+\begin{lstlisting}
+mul %<register>
+imul %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{div}
+Divides \texttt{rdx:rax} by the specified register. Quotient is stored in
+\texttt{rax}, remainder in \texttt{rdx}. For signed division use \texttt{idiv}
+\begin{lstlisting}
+div %<register>
+idiv %<register>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\section{Common Constructs}
+%------------------------------------------------------------------------------
+\subsection{Aligning Stack and Frame Pointers}
+Push the frame pointer onto the stack. Then move the value of the stack pointer
+into the frame pointer. This means that the frame pointer now points to the
+current stack frame. At the end of the program these two steps need to be
+undone.
+\begin{lstlisting}
+push %rbp
+mov  %rsp, %rbp
+# code
+mov  %rbp, %rsp
+pop  %rbp        # or leave
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{Local Variables}
+This reserves space for local variables that could be needed for \texttt{scanf}
+or for direct use in a program. Sizes should be multiples of the desired
+variables size, so \texttt{0x8} for 64 bits.
+\begin{lstlisting}
+sub $0x8, %rsp
+# code
+add $0x8, %rsp
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{Variable Declaration}
+All variable declaration starts with the name and a colon. Variables are
+declared in the data section \texttt{.section .data}. 
+\subsubsection{Strings}
+The string is surrounded by double quotes.
+\begin{lstlisting}
+string: .string "Hello, World!"
+\end{lstlisting}
+\subsubsection{Ints}
+For integers the initial value can be specified, if one wants 64 bits, two
+values need to be specified for each long.
+\begin{lstlisting}
+a: .int 0
+b: .int 0, 0
+\end{lstlisting}
+\subsubsection{Arrays}
+Specify the data type of the elements and then list them.
+\begin{lstlisting}
+array: .quad 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+\end{lstlisting}
+Accessing an array is done like this:
+\begin{lstlisting}
+lea array(%rip), %<reg base>
+mov <offset>(%<reg base>, %<reg index>, <element size>), %<reg destination>
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{General Program Structure}
+A program generally looks like this:
+\begin{lstlisting}
+.section .data
+# variables go here
+.section .text
+# functions and labels go here
+.global main
+main:
+    # main program code goes here
+    xor %eax, %eax
+    ret             # returns 0 when execution is successful
+\end{lstlisting}
+%------------------------------------------------------------------------------
+\subsection{If Else Statements}
+
+\subsection{Switch Statements}
+
+\subsection{Modulus}
+
+\subsection{Loops}
+
+\subsection{Recursion}
+
+\section{Lab 1}
+
+\subsection{Task 1}
+
+What is there to do in this task? What's the crux of the issue?
+
+
+\end{document}

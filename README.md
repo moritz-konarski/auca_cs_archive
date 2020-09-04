@@ -1,2 +1,3 @@
-# auca_cs_archive
-Archive for auca computer science courses
+# AUCA Computer Science Archive
+
+Archive for finished AUCA computer science courses.

@@ -1,0 +1,9 @@
+Stages of Compilation
+
+1. preprocessing
+2. assembly
+3. object code
+4. linking
+5. executable
+
+He said we're done - I think I got full points.
