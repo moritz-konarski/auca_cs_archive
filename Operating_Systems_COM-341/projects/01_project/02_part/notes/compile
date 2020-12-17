@@ -1,0 +1,9 @@
+#!/bin/bash
+
+pandoc                          \
+    notes.md                    \
+    -o _notes.pdf               \
+    -V papersize=a4             \
+    -V geometry:margin=1in      \
+    -V fontsize=12pt            \
+    --toc
