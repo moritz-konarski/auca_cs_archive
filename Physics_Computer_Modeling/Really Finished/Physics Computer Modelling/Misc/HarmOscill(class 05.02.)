@@ -1,0 +1,46 @@
+%class 05.02.
+%Harmonic Oscillation
+
+%-----------preparing window----------------------------
+figure('units','norm','position',[.1 .1 .8 .7],'color',[.9 .9 .9],'name', "Harmonic Oscillation") %Creating Window
+axes('position',[.1 .1 .8 .8],'color',[1 1 1])                                             %Creating Axis
+grid on                         %turing on the grid in coordinate system
+xtitle="t";
+ytitle="y";
+
+%---------------changeable variables---------------------
+A=1;                            %amplitude
+w=1;                            %frequency
+fi=1;                           %initial phase
+i=.1; 
+                          %interval of loop
+%---------------initializing variables-------------------
+t=0;
+y=0;
+t1=0;
+y1=0;
+
+%----------calculating limits of coodinate system--------
+lxp=(2*pi)/w;                   %x-limit positive
+lxn=pi/w;                       %x-limit negative
+lyp=A+.5;                       %y-limit positive
+lyn=-A-.5;                      %y-limit negative
+axis('equal',[lxn lxp lyn lyp]) %preparing coordinate system limits
+
+%-------------creating ball for function-----------------
+h_Ball(0,0,'marker','o','markersize',[5],'color',[1 0 0],'markerfacecolor',[1 0 0]); %creating the ball
+
+%-----------------fuction--------------------------------
+for t=lxn:i:lxp                 %drawing the function
+    
+    y=A*sin(w*t=fi);            %function
+    set(h_Ball,'xdata',t,'ydata',y); %drawing ball
+    line([t1 y1],[t y],'linewidth',[2],'linestyle','--')
+    
+    drawnow                     %drawing trail of function
+    
+    t1=t;
+    y1=y;
+    
+    
+endfor
